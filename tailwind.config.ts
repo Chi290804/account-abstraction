@@ -8,6 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        rosarian: '#FAEADD',
+        solarzed: '#FBCF4F',
+        charcoal: '#222023',
+        purpleSeduction: '#522A6F',
+        harmoniousRose: '#F29CB7',
+        testosterose: '#DDAAFF',       
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":

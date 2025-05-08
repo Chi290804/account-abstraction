@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
+import Image from "next/image";
+import thirdwebIcon from "@public/thirdweb.svg";
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,11 +20,67 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <main className="p-4 pb-10 min-h-[100vh] flex items-center justify-center container max-w-screen-lg mx-auto">
-          <ThirdwebProvider>{children}</ThirdwebProvider>
-        </main>
+      <body className={`bg-[#1e1e1e] text-[#f9f6f1] ${inter.className}`}>
+        <ThirdwebProvider>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-12 bg-[#fdf6e3] text-black shadow-md rounded-md">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </ThirdwebProvider>
       </body>
     </html>
+  );
+}
+
+function Header() {
+  return (
+    <header className="bg-[#f9f6f1] text-black shadow-sm py-6">
+      <div className="container mx-auto flex justify-between items-center px-4">
+        <div className="flex items-center space-x-4">
+          <Image
+            src={thirdwebIcon}
+            alt="Thirdweb Logo"
+            width={60}
+            height={60}
+          />
+          <h1 className="text-xl font-bold tracking-wide">Thirdweb Studio</h1>
+        </div>
+        <nav className="space-x-6">
+          <MenuItem title="Sponsored" href="/gasless" />
+          <MenuItem title="Session keys" href="/session-keys" />
+          <MenuItem title="Batching" href="/batching" />
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+function MenuItem(props: { title: string; href: string }) {
+  return (
+    <Link
+      href={props.href}
+      className="text-sm font-medium hover:underline hover:text-[#a726a9] transition"
+    >
+      {props.title}
+    </Link>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="bg-[#f9f6f1] text-black py-6 mt-auto border-t border-gray-300">
+      <div className="container mx-auto text-center">
+        <Link
+          className="text-sm hover:underline"
+          target="_blank"
+          href="https://github.com/thirdweb-example/account-abstraction"
+        >
+          View code on GitHub
+        </Link>
+      </div>
+    </footer>
   );
 }

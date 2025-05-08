@@ -17,6 +17,7 @@ import {
 } from "../constants";
 import Link from "next/link";
 import { getBalance, claimTo as claimToken } from "thirdweb/extensions/erc20";
+import { lightTheme } from "thirdweb/react";
 
 const BatchingHome = () => {
 	const smartAccount = useActiveAccount();
@@ -68,7 +69,7 @@ const BatchingHome = () => {
 
 	return (
 		<div className="flex flex-col items-center">
-			<h1 className="text-2xl md:text-6xl font-semibold md:font-bold tracking-tighter mb-12 text-zinc-100">
+			<h1 className="text-2xl md:text-6xl font-semibold md:font-bold tracking-tighter mb-12 text-harmoniousRose">
 				Batching Transactions
 			</h1>
 			<ConnectButton
@@ -77,6 +78,13 @@ const BatchingHome = () => {
 				connectModal={{
 					size: "compact",
 				}}
+				theme={lightTheme({
+					colors: {
+					  modalBg: "#d0d6f8", // đổi màu nền modal
+					  connectedButtonBg: "#fed13b", // đổi màu nút ví đã kết nối
+					  connectedButtonBgHover: "#ab8804", // màu hover nút
+					},
+				})}
 			/>
 			<div className="flex flex-col mt-8 gap-4">
 				{smartAccount ? (
