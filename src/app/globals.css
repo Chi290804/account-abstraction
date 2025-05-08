@@ -23,8 +23,8 @@ button[data-testid="tw-connected-button"] {
   }
   
 button[data-testid="tw-connected-button"]:hover {
-    box-shadow: 4px 4px 0px #ab8804;
-    background-color: #ab8804 !important;
+    box-shadow: 4px 4px 0px #000000;
+    background-color: #c7c5bf !important;
     color: #222023 !important;
 }
   

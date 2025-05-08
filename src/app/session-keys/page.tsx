@@ -2,9 +2,8 @@
 import { useState, useCallback } from "react";
 import {
   ConnectButton,
-  TransactionButton,
+  lightTheme,
   useActiveAccount,
-  useActiveWalletConnectionStatus,
   useReadContract,
   useSendTransaction,
 } from "thirdweb/react";
@@ -14,24 +13,27 @@ import {
   removeSessionKey,
 } from "thirdweb/extensions/erc4337";
 import { getContract } from "thirdweb";
-import { generateAccount } from "thirdweb/wallets";
+import { Secp256k1 } from "ox";
+import { privateKeyToAccount } from "thirdweb/wallets";
 import { claimTo } from "thirdweb/extensions/erc1155";
+import Link from "next/link";
+
 import {
+  client,
   accountAbstraction,
   chain,
-  client,
   editionDropAddress,
 } from "../constants";
-import Link from "next/link";
-import type { Account } from "thirdweb/wallets"
+
+// ---- MAIN COMPONENT ----
 const AddSigner = () => {
   const smartAccount = useActiveAccount();
-  const status = useActiveWalletConnectionStatus();
   const [generating, setGenerating] = useState(false);
+  const [exportedSession, setExportedSession] = useState<{
+    privateKey: string;
+    address: string;
+  } | null>(null);
   const [walletToAdd, setWalletToAdd] = useState("");
-  const [sessionKeys, setSessionKeys] = useState<Account[]>(
-	[],
-  );
   const { data: activeSigners, refetch } = useReadContract(
     getAllActiveSigners,
     {
@@ -40,36 +42,44 @@ const AddSigner = () => {
         chain,
         client,
       }),
-      queryOptions: {
-        enabled: !!smartAccount?.address,
-      },
+      queryOptions: { enabled: !!smartAccount?.address },
     },
   );
-  const { mutate: sendTx } = useSendTransaction();
+  const { mutateAsync: sendTx } = useSendTransaction();
 
-  // Auto-generate session key and add
+  // 1. Sinh privateKey & EOA rồi addSessionKey
   const handleGenerateSessionKey = useCallback(async () => {
     try {
       setGenerating(true);
-      const subAccount = await generateAccount({ client });
-      // Add session key with scope only for editionDropAddress
-    if (!smartAccount) {
-      throw new Error("No smart account");
-    }
-    const transaction = addSessionKey({
-      contract: getContract({
-        address: smartAccount?.address ?? "",
+      // 1. Sinh privateKey (secp256k1) và tạo account
+      const privateKey = Secp256k1.randomPrivateKey();
+      const subAccount = privateKeyToAccount({
+        client,
+        privateKey,
+      });
+      setExportedSession({
+        privateKey,
+        address: subAccount.address,
+      });
+
+      if (!smartAccount)
+        throw new Error("No smart account");
+      const contract = getContract({
+        address: smartAccount.address,
         chain,
         client,
-      }),
-      account: smartAccount!,
-      sessionKeyAddress: subAccount.address,
-      permissions: {
-        approvedTargets: [editionDropAddress],
-      },
-    });
+      });
+      // 2. Thêm session key (address)
+      const transaction = addSessionKey({
+        contract,
+        account: smartAccount,
+        sessionKeyAddress: subAccount.address,
+        permissions: {
+          approvedTargets: [editionDropAddress],
+          // ...tuỳ chỉnh các quyền khác
+        },
+      });
       await sendTx(transaction);
-      setSessionKeys((keys) => [...keys, subAccount]);
       await refetch();
       alert(
         "Tạo session key thành công: " + subAccount.address,
@@ -80,12 +90,13 @@ const AddSigner = () => {
   }, [
     client,
     smartAccount,
+    chain,
     editionDropAddress,
     sendTx,
     refetch,
   ]);
 
-  // Mint NFT for this session key
+  // 2. Mint NFT về một session key address
   const mintNFT = useCallback(
     async (targetAddress: string) => {
       const contract = getContract({
@@ -93,11 +104,10 @@ const AddSigner = () => {
         chain,
         client,
       });
-      // Ví dụ claim 1 NFT tokenId = 0 về session key address
       const transaction = claimTo({
         contract,
         to: targetAddress,
-        tokenId: 0n,
+        tokenId: 0n, // sửa tokenId nếu muốn
         quantity: 1n,
       });
       await sendTx(transaction);
@@ -106,18 +116,18 @@ const AddSigner = () => {
     [editionDropAddress, chain, client, sendTx],
   );
 
-  // Revoke session key
+  // 3. Revoke
   const revokeSessionKey = useCallback(
     async (address: string) => {
-      if (!smartAccount) {
+      if (!smartAccount)
         throw new Error("No smart account");
-      }
+      const contract = getContract({
+        address: smartAccount.address,
+        chain,
+        client,
+      });
       const transaction = removeSessionKey({
-        contract: getContract({
-      address: smartAccount.address,
-      chain,
-      client,
-        }),
+        contract,
         account: smartAccount,
         sessionKeyAddress: address,
       });
@@ -129,103 +139,98 @@ const AddSigner = () => {
   );
 
   return (
-    <div className="flex flex-col items-center">
-      <h1 className="text-2xl md:text-6xl font-semibold md:font-bold tracking-tighter mb-12 text-zinc-100">
+    <div className="flex flex-col items-center px-6 py-10 max-w-4xl mx-auto bg-[#f5f0e1] border-4 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+      <h1 className="text-center text-2xl md:text-6xl font-bold tracking-tighter mb-10 font-mono text-black">
         Session Keys
       </h1>
       <ConnectButton
         client={client}
         accountAbstraction={accountAbstraction}
+        chain={chain}
+        theme={lightTheme()}
         connectModal={{ size: "compact" }}
       />
-      {status === "connected" ? (
-        <div className="flex flex-col mt-8 w-full max-w-2xl">
-          <button
-            className="px-4 py-2 rounded bg-blue-500 text-white font-bold w-full mb-6"
-            disabled={generating}
-            onClick={handleGenerateSessionKey}
-          >
-            {generating
-              ? "Đang sinh session key..."
-              : "Tạo session key tự động"}
-          </button>
-          <div className="flex mt-4 mb-4">
-            <input
-              className="rounded-lg text-black p-4 w-2/3 mr-4"
-              type="text"
-              placeholder="Address or ENS"
-              onChange={(e) =>
-                setWalletToAdd(e.target.value)
-              }
-              value={walletToAdd}
-            />
-            <TransactionButton
-              transaction={async () => {
-                if (!walletToAdd)
-                  throw new Error(
-                    "Please enter an address",
-                  );
-                if (!smartAccount)
-                  throw new Error("No smart account");
-                return addSessionKey({
-                  contract: getContract({
-                    address: smartAccount.address,
-                    chain,
-                    client,
-                  }),
-                  account: smartAccount,
-                  sessionKeyAddress: walletToAdd,
-                  permissions: {
-                    approvedTargets: [editionDropAddress],
-                  },
-                });
+
+      <div className="mt-6 w-full max-w-xl">
+	  	<button
+			className="mx-auto px-6 py-3 rounded border-2 border-black bg-[#222023] text-white font-bold mb-6 hover:bg-[#ab8804] hover:text-black shadow-md"
+			disabled={generating}
+			onClick={handleGenerateSessionKey}
+			>
+			{generating
+				? "Đang sinh session key..."
+				: "Tạo session key"}
+		</button>
+        {exportedSession && (
+          <div className="mb-4">
+            <div className="text-black text-xs mb-2">
+              <b>Session Address:</b>{" "}
+              <span className="break-all">
+                {exportedSession.address}
+              </span>
+              <br />
+              <b>PrivateKey:</b>{" "}
+              <span className="break-all">
+                {exportedSession.privateKey}
+              </span>
+            </div>
+            <button
+              className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-700 text-xs"
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  exportedSession.privateKey,
+                );
+                alert("Đã copy private key!");
+                setExportedSession(null); // Bật dòng này nếu muốn tự động ẩn key sau khi export
               }}
             >
-              Add Session Key
-            </TransactionButton>
+              Export Session Key PrivateKey
+            </button>
           </div>
-          <h3 className="text-lg font-bold mt-8">
-            Active session keys
-          </h3>
-          <ul>
-            {(activeSigners?.length
-              ? activeSigners
-              : []
-            ).map((a) => (
+        )}
+        <h3 className="text-xl font-bold mt-8 mb-4 border-b-2 border-black pb-2">
+          Active Session Keys
+        </h3>
+        <ul className="bg-[#fff9f0] border-2 border-black rounded p-4">
+          {(activeSigners?.length ? activeSigners : []).map(
+            (a) => (
               <li
                 key={a.signer}
-                className="text-sm flex items-center gap-2 w-full justify-between border-b py-2"
+                className="text-sm flex items-center justify-between py-2 border-b border-dotted border-black"
               >
-                <span className="text-gray-400">
+                <span className="text-black break-all mr-2">
                   {a.signer}
                 </span>
-                <button
-                  className="px-2 py-1 bg-red-400 text-white rounded text-xs"
-                  onClick={() => revokeSessionKey(a.signer)}
-                >
-                  Revoke
-                </button>
-                <button
-                  className="px-2 py-1 bg-green-600 text-white rounded text-xs"
-                  onClick={() => mintNFT(a.signer)}
-                >
-                  Mint NFT cho key này
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    className="px-3 py-1 bg-red-500 text-white text-xs rounded border-2 border-black"
+                    onClick={() =>
+                      revokeSessionKey(a.signer)
+                    }
+                  >
+                    Revoke
+                  </button>
+                  <button
+                    className="px-3 py-1 bg-green-600 text-white text-xs rounded border-2 border-black"
+                    onClick={() => mintNFT(a.signer)}
+                  >
+                    Mint NFT
+                  </button>
+                </div>
               </li>
-            ))}
-            {!activeSigners?.length && (
-              <li className="text-sm text-gray-400">
-                No active session keys added
-              </li>
-            )}
-          </ul>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-400 mt-8">
-          Login to add session keys
-        </p>
-      )}
-      <Link href="/" className="text-sm text-gray-400 mt-8">
+            ),
+          )}
+          {!activeSigners?.length && (
+            <li className="text-sm text-gray-500 italic">
+              No active session keys added
+            </li>
+          )}
+        </ul>
+      </div>
+      <Link
+        href="/"
+        className="mt-10 text-sm underline text-black hover:text-[#ab8804] transition"
+      >
         Back to menu
       </Link>
     </div>

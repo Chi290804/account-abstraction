@@ -22,9 +22,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`bg-[#1e1e1e] text-[#f9f6f1] ${inter.className}`}>
         <ThirdwebProvider>
-          <div className="min-h-screen flex flex-col">
+          <div className="flex flex-col">
             <Header />
-            <main className="flex-grow container mx-auto px-4 py-12 bg-[#fdf6e3] text-black shadow-md rounded-md">
+            <main className="flex-grow container mx-auto px-4 py-12 bg-[#f9f6f1] text-black shadow-md">
               {children}
             </main>
             <Footer />
