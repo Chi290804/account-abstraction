@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
 import Image from "next/image";
-import thirdwebIcon from "@public/thirdweb.svg";
+import walletIcon from "@public/bitcoin.svg";
 import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -41,12 +41,12 @@ function Header() {
       <div className="container mx-auto flex justify-between items-center px-4">
         <div className="flex items-center space-x-4">
           <Image
-            src={thirdwebIcon}
-            alt="Thirdweb Logo"
+            src={walletIcon}
+            alt="Wallet Logo"
             width={60}
             height={60}
           />
-          <h1 className="text-xl font-bold tracking-wide">Thirdweb Studio</h1>
+          <h1 className="text-xl font-bold tracking-wide">Account Abstraction</h1>
         </div>
         <nav className="space-x-6">
           <MenuItem title="Sponsored" href="/gasless" />

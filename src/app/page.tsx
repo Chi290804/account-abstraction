@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ConnectButton } from "thirdweb/react";
-import thirdwebIcon from "@public/thirdweb.svg";
+import walletIcon from "@public/bitcoin.svg";
 import { accountAbstraction, client } from "./constants";
 import Link from "next/link";
 import { lightTheme } from "thirdweb/react";
@@ -10,19 +10,11 @@ export default function Home() {
       <div className="max-w-5xl mx-auto flex flex-col items-center">
         {/* Connect Button */}
         <ConnectButton
-            client={client}
-            accountAbstraction={accountAbstraction}
-            connectModal={{
-                size: "compact",
-            }}
-            theme={lightTheme({
-                colors: {
-                modalBg: "#f5f0e1",
-                connectedButtonBg: "#222023",        // nền đen
-                connectedButtonBgHover: "#222023",   // giữ màu nền đen khi hover
-                },
-            })}
-        />
+                client={client}
+                accountAbstraction={accountAbstraction}
+                theme={lightTheme()}
+                connectModal={{ size: "compact" }}
+          />
         <h1 className="text-4xl md:text-6xl font-extrabold text-center mt-12 mb-4 border-4 border-black px-6 py-3 shadow-lg bg-white">
           Welcome to the Demo!
         </h1>

@@ -107,7 +107,7 @@ const AddSigner = () => {
       const transaction = claimTo({
         contract,
         to: targetAddress,
-        tokenId: 0n, // sửa tokenId nếu muốn
+        tokenId: 5n, // sửa tokenId nếu muốn
         quantity: 1n,
       });
       await sendTx(transaction);
