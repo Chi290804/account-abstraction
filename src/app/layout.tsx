@@ -76,7 +76,7 @@ function Footer() {
         <Link
           className="text-sm hover:underline"
           target="_blank"
-          href="https://github.com/thirdweb-example/account-abstraction"
+          href="https://github.com/Chi290804/account-abstraction"
         >
           View code on GitHub
         </Link>
